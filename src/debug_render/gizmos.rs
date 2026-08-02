@@ -7,9 +7,8 @@
 //! [`AircraftFdmDebugPlugin`]: super::AircraftFdmDebugPlugin
 
 use crate::_bevy::*;
-use avian3d::prelude::{
-    ComputedCenterOfMass, ComputedMass, ConstantForce, ConstantTorque, Rotation,
-};
+use crate::math::vector_to_vec3;
+use avian3d::prelude::{ComputedCenterOfMass, ComputedMass, ConstantForce, ConstantTorque};
 
 use super::configuration::{FdmDebugRender, FdmGizmos};
 use crate::components::{
@@ -23,17 +22,18 @@ use crate::components::{
 /// Draw a sphere at the aircraft's centre of gravity (CG).
 ///
 /// Uses Avian's [`ComputedCenterOfMass`] (local offset from entity origin) and
-/// [`Rotation`] (physics rotation) to compute the world-space CG position.
+/// the entity's [`GlobalTransform`] rotation (synced from the physics rotation
+/// before `PostUpdate`) to compute the world-space CG position.
 pub(super) fn debug_render_cg(
     mut gizmos: Gizmos<FdmGizmos>,
     store: Res<GizmoConfigStore>,
-    query: Query<(&GlobalTransform, &Rotation, &ComputedCenterOfMass), With<AircraftGeometry>>,
+    query: Query<(&GlobalTransform, &ComputedCenterOfMass), With<AircraftGeometry>>,
 ) {
     let config = store.config::<FdmGizmos>().1;
     let Some(color) = config.cg_color else { return };
 
-    for (gt, rot, com) in &query {
-        let cg = gt.translation() + rot.0 * com.0;
+    for (gt, com) in &query {
+        let cg = gt.translation() + gt.rotation() * vector_to_vec3(com.0);
         gizmos.sphere(
             Isometry3d::from_translation(cg),
             config.marker_radius,
@@ -120,13 +120,13 @@ pub(super) fn debug_render_thrust(
 }
 
 /// Draw the total aero+thrust force, weight, and net-force arrows from the CG.
+#[allow(clippy::unnecessary_cast)]
 pub(super) fn debug_render_resultant(
     mut gizmos: Gizmos<FdmGizmos>,
     store: Res<GizmoConfigStore>,
     query: Query<
         (
             &Transform,
-            &Rotation,
             &ConstantForce,
             &ComputedMass,
             &ComputedCenterOfMass,
@@ -136,22 +136,22 @@ pub(super) fn debug_render_resultant(
 ) {
     let config = store.config::<FdmGizmos>().1;
 
-    for (tf, rot, cf, mass, com) in &query {
-        let cg = tf.translation + rot.0 * com.0;
+    for (tf, cf, mass, com) in &query {
+        let cg = tf.translation + tf.rotation * vector_to_vec3(com.0);
         let scale = config.force_scale;
 
         if let Some(color) = config.total_force_color {
-            gizmos.arrow(cg, cg + cf.0 * scale, color);
+            gizmos.arrow(cg, cg + vector_to_vec3(cf.0) * scale, color);
         }
 
-        let weight = Vec3::new(0.0, -mass.value() * 9.806_65, 0.0);
+        let weight = Vec3::new(0.0, -mass.value() as f32 * 9.806_65, 0.0);
 
         if let Some(color) = config.weight_color {
             gizmos.arrow(cg, cg + weight * scale, color);
         }
 
         if let Some(net_color) = config.resultant_color {
-            let net = cf.0 + weight;
+            let net = vector_to_vec3(cf.0) + weight;
             if net.length_squared() > 1.0 {
                 gizmos.arrow(cg, cg + net * scale, net_color);
             }
@@ -172,33 +172,25 @@ pub(super) fn debug_render_resultant(
 pub(super) fn debug_render_moments(
     mut gizmos: Gizmos<FdmGizmos>,
     store: Res<GizmoConfigStore>,
-    query: Query<
-        (
-            &Transform,
-            &Rotation,
-            &ComputedCenterOfMass,
-            &ConstantTorque,
-        ),
-        With<AircraftGeometry>,
-    >,
+    query: Query<(&Transform, &ComputedCenterOfMass, &ConstantTorque), With<AircraftGeometry>>,
 ) {
     let config = store.config::<FdmGizmos>().1;
 
-    for (tf, rot, com, torque) in &query {
-        let cg = tf.translation + rot.0 * com.0;
+    for (tf, com, torque) in &query {
+        let cg = tf.translation + tf.rotation * vector_to_vec3(com.0);
         let scale = config.force_scale;
 
         // Decompose torque into body-frame components and draw each axis.
         // Torque is already in world frame; project onto body axes for display.
-        let t = torque.0;
+        let t = vector_to_vec3(torque.0);
         if t.length_squared() < 1.0 {
             continue;
         }
 
         // Body axes in world space.
-        let body_x = rot.0 * Vec3::X; // roll axis
-        let body_y = rot.0 * Vec3::Y; // pitch axis
-        let body_z = rot.0 * Vec3::Z; // yaw axis
+        let body_x = tf.rotation * Vec3::X; // roll axis
+        let body_y = tf.rotation * Vec3::Y; // pitch axis
+        let body_z = tf.rotation * Vec3::Z; // yaw axis
 
         let t_roll = t.dot(body_x);
         let t_pitch = t.dot(body_y);
@@ -387,25 +379,22 @@ fn draw_zone_shape(
 pub(super) fn debug_render_wind(
     mut gizmos: Gizmos<FdmGizmos>,
     store: Res<GizmoConfigStore>,
-    query: Query<
-        (&Transform, &Rotation, &ComputedCenterOfMass, &FlightState),
-        With<AircraftGeometry>,
-    >,
+    query: Query<(&Transform, &ComputedCenterOfMass, &FlightState), With<AircraftGeometry>>,
 ) {
     let config = store.config::<FdmGizmos>().1;
     let Some(color) = config.wind_color else {
         return;
     };
 
-    for (tf, rot, com, fs) in &query {
+    for (tf, com, fs) in &query {
         if fs.airspeed_ms < 1.0 {
             continue;
         }
 
-        let cg = tf.translation + rot.0 * com.0;
+        let cg = tf.translation + tf.rotation * vector_to_vec3(com.0);
 
         // Body-frame forward (nose direction) in world space.
-        let nose_dir = rot.0 * Vec3::X;
+        let nose_dir = tf.rotation * Vec3::X;
 
         // Freestream direction: the wind comes from opposite the velocity vector.
         // Reconstruct velocity direction from alpha and beta in body frame, then
@@ -414,7 +403,7 @@ pub(super) fn debug_render_wind(
         let (sa, ca) = (fs.alpha_rad.sin() as f32, fs.alpha_rad.cos() as f32);
         let (sb, cb) = (fs.beta_rad.sin() as f32, fs.beta_rad.cos() as f32);
         let vel_body_dir = Vec3::new(ca * cb, sb, sa * cb); // unit vector
-        let vel_world_dir = rot.0 * vel_body_dir;
+        let vel_world_dir = tf.rotation * vel_body_dir;
 
         // Arrow scale: use a fixed 2 m length so it doesn't dwarf force arrows.
         let arm = 2.0_f32;

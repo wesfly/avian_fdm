@@ -28,12 +28,7 @@ default = ["f32", "debug-plugin"]
 #          Bevy rendering integration, e.g. pure headless FDM or large-world sims.
 f32 = ["avian3d/default-collider", "avian3d/f32", "avian3d/parry-f32"]
 f64 = ["avian3d/default-collider", "avian3d/f64", "avian3d/parry-f64"]
-debug-plugin = [
-    "dep:bevy_color",
-    "dep:bevy_gizmos",
-    "avian3d/f32",
-    "avian3d/parry-f32",
-]
+debug-plugin = ["dep:bevy_color", "dep:bevy_gizmos"]
 
 [dependencies]
 # collider-from-mesh is excluded: avian_fdm uses only analytic shapes (boxes, spheres,
