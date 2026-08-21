@@ -3,6 +3,7 @@
 //! Also read by the debug visualisation for per-zone force arrows.
 
 use crate::_bevy::*;
+use bevy_math::DVec3;
 
 /// World-space force and application point for one zone.
 ///
@@ -18,7 +19,7 @@ use crate::_bevy::*;
 #[reflect(Component)]
 pub(crate) struct ZoneForce {
     /// World-space force contribution (N), from CL, CD, CY coefficients.
-    pub force: Vec3,
+    pub force: DVec3,
     /// World-space point at which the force acts (for moment arm calculation).
-    pub world_point: Vec3,
+    pub world_point: DVec3,
 }

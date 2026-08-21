@@ -7,10 +7,10 @@
 //! force/torque accumulators.
 
 use avian3d::math::Vector;
-use bevy_math::Vec3;
+use bevy_math::DVec3;
 
 use crate::components::ZoneForce;
-use crate::math::vec3_to_vector;
+use crate::math::dvec3_to_vector;
 
 /// Accumulate a pre-computed engine zone's thrust into the root force/torque.
 ///
@@ -23,11 +23,11 @@ pub(super) fn accumulate_engine_force(
     total_force: &mut Vector,
     total_torque: &mut Vector,
 ) {
-    if zf.force != Vec3::ZERO {
-        let force = vec3_to_vector(zf.force);
+    if zf.force != DVec3::ZERO {
+        let force = dvec3_to_vector(zf.force);
         *total_force += force;
         // ZoneForce.world_point is Vec3 (always f32 for visualization).
-        *total_torque += (vec3_to_vector(zf.world_point) - com_world).cross(force);
+        *total_torque += (dvec3_to_vector(zf.world_point) - com_world).cross(force);
     }
 }
 
@@ -39,8 +39,8 @@ mod tests {
     #[test]
     fn engine_at_cg_no_moment() {
         let zf = ZoneForce {
-            force: Vec3::new(500.0, 0.0, 0.0),
-            world_point: Vec3::ZERO,
+            force: DVec3::new(500.0, 0.0, 0.0),
+            world_point: DVec3::ZERO,
         };
         let (mut f, mut t) = (Vector::ZERO, Vector::ZERO);
         accumulate_engine_force(&zf, Vector::ZERO, &mut f, &mut t);
@@ -52,8 +52,8 @@ mod tests {
     #[test]
     fn engine_offset_right_produces_yaw_torque() {
         let zf = ZoneForce {
-            force: Vec3::new(500.0, 0.0, 0.0),
-            world_point: Vec3::new(0.0, 2.0, 0.0),
+            force: DVec3::new(500.0, 0.0, 0.0),
+            world_point: DVec3::new(0.0, 2.0, 0.0),
         };
         let (mut f, mut t) = (Vector::ZERO, Vector::ZERO);
         accumulate_engine_force(&zf, Vector::ZERO, &mut f, &mut t);
@@ -69,8 +69,8 @@ mod tests {
     #[test]
     fn engine_zero_force_no_accumulation() {
         let zf = ZoneForce {
-            force: Vec3::ZERO,
-            world_point: Vec3::new(0.0, 5.0, 0.0),
+            force: DVec3::ZERO,
+            world_point: DVec3::new(0.0, 5.0, 0.0),
         };
         let (mut f, mut t) = (Vector::new(100.0, 0.0, 0.0), Vector::new(0.0, 50.0, 0.0));
         accumulate_engine_force(&zf, Vector::ZERO, &mut f, &mut t);

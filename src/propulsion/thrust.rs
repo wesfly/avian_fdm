@@ -1,7 +1,7 @@
 //! Engine thrust computation system (Gagg-Ferrar altitude model).
 
 use crate::_bevy::*;
-use crate::math::{quat_to_quaternion, vector_to_vec3};
+use crate::math::{quat_to_quaternion, vector_to_dvec3};
 use avian3d::math::Scalar;
 use avian3d::prelude::ColliderOf;
 
@@ -19,7 +19,7 @@ pub(super) const RHO_0: Scalar = 1.225;
 pub fn compute_engine_zone_forces(
     mut engine_query: Query<(
         &EngineZone,
-        &GlobalTransform,
+        &avian3d::prelude::Position,
         &ColliderOf,
         &mut ZoneForce,
         Option<&Failure>,
@@ -74,8 +74,8 @@ pub fn compute_engine_zone_forces(
             continue;
         }
 
-        zone_force.force = vector_to_vec3(thrust_world);
-        zone_force.world_point = engine_gt.translation();
+        zone_force.force = vector_to_dvec3(thrust_world);
+        zone_force.world_point = engine_gt.0.into();
     }
 }
 

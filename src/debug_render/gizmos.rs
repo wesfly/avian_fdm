@@ -95,7 +95,11 @@ pub(super) fn debug_render_zone_forces(
             continue;
         }
         let start = zone_gt.transform_point(zone.ac_offset);
-        gizmos.arrow(start, start + zf.force * config.force_scale, color);
+        gizmos.arrow(
+            start,
+            start + zf.force.as_vec3() * config.force_scale,
+            color,
+        );
     }
 }
 
@@ -115,7 +119,11 @@ pub(super) fn debug_render_thrust(
             continue;
         }
         let start = zone_gt.translation();
-        gizmos.arrow(start, start + zf.force * config.force_scale, color);
+        gizmos.arrow(
+            start,
+            start + zf.force.as_vec3() * config.force_scale,
+            color,
+        );
     }
 }
 

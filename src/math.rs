@@ -6,7 +6,7 @@
 //! `f32` feature and `f64`/`DVec3`/`DQuat` with `f64`.
 
 use avian3d::math::{Quaternion, Scalar, Vector};
-use bevy_math::{Quat, Vec3};
+use bevy_math::{DVec3, Quat, Vec3};
 
 /// Linear interpolation in a 1-D breakpoint table.
 ///
@@ -35,6 +35,13 @@ pub(crate) fn vec3_to_vector(v: Vec3) -> Vector {
     Vector::new(v.x as Scalar, v.y as Scalar, v.z as Scalar)
 }
 
+/// Convert a Bevy `DVec3` (always f64) to the active-precision `Vector`.
+#[inline]
+#[allow(clippy::unnecessary_cast)]
+pub(crate) fn dvec3_to_vector(v: DVec3) -> Vector {
+    Vector::new(v.x as Scalar, v.y as Scalar, v.z as Scalar)
+}
+
 /// Convert a Bevy `Quat` (always f32) to the active-precision `Quaternion`.
 #[inline]
 #[allow(clippy::unnecessary_cast)]
@@ -47,6 +54,13 @@ pub(crate) fn quat_to_quaternion(q: Quat) -> Quaternion {
 #[allow(clippy::unnecessary_cast)]
 pub(crate) fn vector_to_vec3(v: Vector) -> Vec3 {
     Vec3::new(v.x as f32, v.y as f32, v.z as f32)
+}
+
+/// Convert the active-precision `Vector` back to a Bevy `DVec3` (always f64).
+#[inline]
+#[allow(clippy::unnecessary_cast)]
+pub(crate) fn vector_to_dvec3(v: Vector) -> DVec3 {
+    DVec3::new(v.x as f64, v.y as f64, v.z as f64)
 }
 
 /// Rotate a vector from the aircraft body frame into the Bevy world frame.
