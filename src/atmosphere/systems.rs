@@ -7,7 +7,9 @@
 use super::isa::atmosphere_at;
 use crate::_bevy::*;
 use crate::components::AtmosphereState;
-use avian3d::math::Scalar;
+use avian3d::{math::Scalar, prelude::Position};
+
+const EARTH_RADIUS: Scalar = 6_360_000.0;
 
 /// Updates [`AtmosphereState`] on each aircraft from its world-space altitude.
 ///
