@@ -9,7 +9,9 @@
 //!
 //! Reference: Anderson, "Introduction to Flight", Chapter 5.
 
-use avian3d::math::{Scalar, Vector, PI};
+use std::f32::consts::PI;
+
+use avian3d::math::{RVector, Real};
 
 use crate::components::InducedDrag;
 
@@ -29,13 +31,13 @@ use crate::components::InducedDrag;
 /// in world space.
 pub(super) fn apply_induced_drag(
     id: &InducedDrag,
-    total_cl_x_area: Scalar,
-    s_ref: Scalar,
-    wing_span: Scalar,
-    qbar: Scalar,
-    vel_body_unit_global: Vector,
+    total_cl_x_area: Real,
+    s_ref: Real,
+    wing_span: Real,
+    qbar: Real,
+    vel_body_unit_global: RVector,
     body_to_world: avian3d::prelude::Rotation,
-) -> Vector {
+) -> RVector {
     let ar = wing_span * wing_span / s_ref;
     let cl_aircraft = total_cl_x_area / s_ref;
     let cd_i = cl_aircraft * cl_aircraft / (PI * id.oswald_factor * ar);
@@ -55,7 +57,7 @@ mod tests {
     #[test]
     fn zero_cl_produces_zero_induced_drag() {
         let id = InducedDrag { oswald_factor: 0.8 };
-        let drag = apply_induced_drag(&id, 0.0, 10.0, 10.0, 100.0, Vector::X, identity_rot());
+        let drag = apply_induced_drag(&id, 0.0, 10.0, 10.0, 100.0, RVector::X, identity_rot());
         assert!(
             drag.length() < 1e-10,
             "zero CL → zero induced drag, got {drag:?}"
@@ -66,7 +68,7 @@ mod tests {
     fn induced_drag_opposes_velocity() {
         let id = InducedDrag { oswald_factor: 0.8 };
         // Velocity in +X; induced drag should be in -X.
-        let drag = apply_induced_drag(&id, 10.0, 10.0, 10.0, 100.0, Vector::X, identity_rot());
+        let drag = apply_induced_drag(&id, 10.0, 10.0, 10.0, 100.0, RVector::X, identity_rot());
         assert!(
             drag.x < 0.0,
             "induced drag should oppose velocity, got {drag:?}"
@@ -78,8 +80,8 @@ mod tests {
     #[test]
     fn induced_drag_scales_with_cl_squared() {
         let id = InducedDrag { oswald_factor: 0.8 };
-        let drag1 = apply_induced_drag(&id, 10.0, 10.0, 10.0, 100.0, Vector::X, identity_rot());
-        let drag2 = apply_induced_drag(&id, 20.0, 10.0, 10.0, 100.0, Vector::X, identity_rot());
+        let drag1 = apply_induced_drag(&id, 10.0, 10.0, 10.0, 100.0, RVector::X, identity_rot());
+        let drag2 = apply_induced_drag(&id, 20.0, 10.0, 10.0, 100.0, RVector::X, identity_rot());
         // Doubling CL → 4x induced drag.
         let ratio = drag2.x / drag1.x;
         assert!((ratio - 4.0).abs() < 1e-5, "CD_i ∝ CL², ratio={ratio}");

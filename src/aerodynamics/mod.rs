@@ -39,8 +39,8 @@ pub use local_angles::zone_local_angles;
 pub(crate) use world_forces::zone_force_world;
 
 use crate::_bevy::*;
-use crate::math::{quat_to_quaternion, vec3_to_vector, vector_to_dvec3};
-use avian3d::math::{Scalar, Vector};
+use crate::math::{vec3_to_vector, vector_to_dvec3};
+use avian3d::math::{RVector, Real};
 use avian3d::prelude::{ComputedCenterOfMass, ConstantForce, ConstantTorque, Position, Rotation};
 
 use crate::components::EngineZone;
@@ -87,8 +87,8 @@ pub fn compute_aero_forces(
         induced_drag,
     ) in root_query.iter_mut()
     {
-        cf.0 = Vector::ZERO;
-        ct.0 = Vector::ZERO;
+        cf.0 = RVector::ZERO;
+        ct.0 = RVector::ZERO;
 
         if flight.airspeed_ms < 1e-4 {
             continue;
@@ -110,11 +110,11 @@ pub fn compute_aero_forces(
         let body_to_world = rot.0;
         let (sa, ca) = (alpha.sin(), alpha.cos());
         let (sb, cb) = (beta.sin(), beta.cos());
-        let vel_body_unit_global = Vector::new(ca * cb, sb, sa * cb);
-        let com_world: Vector = pos.0 + body_to_world * com.0;
+        let vel_body_unit_global = RVector::new(ca * cb, sb, sa * cb);
+        let com_world: RVector = pos.0 + body_to_world * com.0;
         let use_lod = lod_damping.is_some();
 
-        let mut total_cl_x_area: Scalar = 0.0;
+        let mut total_cl_x_area: Real = 0.0;
 
         for child in children.iter() {
             if let Ok((zone, zone_transform, mut zone_force, opt_failure)) =
@@ -127,8 +127,8 @@ pub fn compute_aero_forces(
                     continue;
                 }
 
-                let zone_body_from_cg: Vector = vec3_to_vector(zone_transform.translation) - com.0;
-                let zone_q = quat_to_quaternion(zone_transform.rotation);
+                let zone_body_from_cg: RVector = vec3_to_vector(zone_transform.translation) - com.0;
+                let zone_q = zone_transform.rotation;
 
                 // Step 0: per-zone local α/β (skipped in LOD mode).
                 let (alpha_local, beta_local, vel_zone_unit_local, zone_to_world) = if use_lod {
@@ -154,7 +154,7 @@ pub fn compute_aero_forces(
                     (
                         al,
                         bl,
-                        Vector::new(cal * cbl, sbl, sal * cbl),
+                        RVector::new(cal * cbl, sbl, sal * cbl),
                         body_to_world * zone_q,
                     )
                 };
@@ -196,7 +196,7 @@ pub fn compute_aero_forces(
                 let force = wf.force;
                 let torque = wf.torque;
                 let ac_world = pos.0
-                    + body_to_world * vec3_to_vector(zone_transform.translation + zone.ac_offset);
+                    + (body_to_world * vec3_to_vector(zone_transform.translation + zone.ac_offset));
 
                 zone_force.force = vector_to_dvec3(force);
                 zone_force.world_point = vector_to_dvec3(ac_world);
@@ -208,8 +208,8 @@ pub fn compute_aero_forces(
 
             // Step 3: engine zone thrust accumulation.
             if let Ok(zf) = engine_zone_query.get(child) {
-                let mut ef = Vector::ZERO;
-                let mut et = Vector::ZERO;
+                let mut ef = RVector::ZERO;
+                let mut et = RVector::ZERO;
                 accumulate_engine_force(zf, com_world, &mut ef, &mut et);
                 cf.0 += ef;
                 ct.0 += et;

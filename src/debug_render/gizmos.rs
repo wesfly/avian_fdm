@@ -8,6 +8,7 @@
 
 use crate::_bevy::*;
 use crate::math::vector_to_vec3;
+use ::bevy::shape::{Cone, Cuboid, Cylinder, Sphere};
 use avian3d::prelude::{ComputedCenterOfMass, ComputedMass, ConstantForce, ConstantTorque};
 
 use super::configuration::{FdmDebugRender, FdmGizmos};
@@ -350,11 +351,7 @@ fn draw_zone_shape(
         }
         GizmoShape::Sphere { radius } => {
             gizmos
-                .primitive_3d(
-                    &bevy_math::primitives::Sphere::new(*radius),
-                    iso_at(Quat::IDENTITY),
-                    color,
-                )
+                .primitive_3d(&Sphere::new(*radius), iso_at(Quat::IDENTITY), color)
                 .resolution(32);
         }
         GizmoShape::Quad { corners } => {

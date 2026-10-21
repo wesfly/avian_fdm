@@ -20,6 +20,7 @@
 use crate::_bevy::*;
 use crate::components::{AeroZone, AircraftGeometry, EngineZone};
 use avian3d::prelude::Collider;
+use bevy::shape::{Capsule3d, Cuboid, Cylinder, Sphere};
 use bevy_transform::TransformSystems;
 
 use super::configuration::FdmGizmos;

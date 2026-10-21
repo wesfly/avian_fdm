@@ -1,6 +1,6 @@
 //! [`AeroCoeff::validate`] and the `is_strictly_increasing` helper.
 
-use avian3d::math::Scalar as S;
+use avian3d::math::Real as S;
 
 use super::types::AeroCoeff;
 

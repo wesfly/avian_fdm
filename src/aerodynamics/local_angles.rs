@@ -1,7 +1,5 @@
 //! Step 0: per-zone effective angle of attack and sideslip.
 
-use avian3d::math::Scalar;
-
 /// Compute the local effective angle of attack and sideslip for a zone.
 ///
 /// Body angular rates create local velocity increments at each zone that shift
@@ -74,15 +72,15 @@ use avian3d::math::Scalar;
 /// `(alpha_local, beta_local)`, both in radians.
 #[allow(clippy::too_many_arguments)]
 pub fn zone_local_angles(
-    alpha: Scalar,
-    beta: Scalar,
-    p: Scalar,
-    q: Scalar,
-    r: Scalar,
-    x: Scalar,
-    y: Scalar,
-    v: Scalar,
-) -> (Scalar, Scalar) {
+    alpha: f32,
+    beta: f32,
+    p: f32,
+    q: f32,
+    r: f32,
+    x: f32,
+    y: f32,
+    v: f32,
+) -> (f32, f32) {
     let alpha_local = alpha + (p * y - q * x) / v;
     let beta_local = beta + (r * x) / v;
     (alpha_local, beta_local)
@@ -90,12 +88,17 @@ pub fn zone_local_angles(
 
 #[cfg(test)]
 mod tests {
+    use avian3d::math::RVector;
+    use bevy_math::Quat;
+
+    #[cfg(feature = "f32")]
+    use avian3d::math::Real;
+
     use super::*;
     use crate::aerodynamics::coefficients::evaluate_zone_coefficients;
     use crate::aerodynamics::world_forces::zone_force_world;
     use crate::components::aero_coeff::AeroCoeff;
     use crate::components::{AeroZone, ControlInputs};
-    use avian3d::math::{Quaternion, Vector};
 
     fn neutral_controls() -> ControlInputs {
         ControlInputs {
@@ -107,9 +110,9 @@ mod tests {
     }
 
     #[cfg(feature = "f32")]
-    const EPS: Scalar = 1e-5;
+    const EPS: Real = 1e-5;
     #[cfg(not(feature = "f32"))]
-    const EPS: Scalar = 1e-12;
+    const EPS: Real = 1e-12;
 
     /// Layer 1: positive roll rate + positive spanwise station → increased local α.
     #[test]
@@ -205,26 +208,26 @@ mod tests {
     /// explicit dihedral_rad correction layer.
     #[test]
     fn zone_rotation_dihedral_gives_correct_alpha_asymmetry() {
-        use avian3d::math::{Quaternion, Vector};
+        use avian3d::math::RVector;
 
-        let gamma: Scalar = 0.0698; // 4 degrees, J3 Cub dihedral
-        let alpha_body: Scalar = 0.05;
-        let beta: Scalar = 0.2; // wind from the right
+        let gamma: f32 = 0.0698; // 4 degrees, J3 Cub dihedral
+        let alpha_body: f32 = 0.05;
+        let beta: f32 = 0.2; // wind from the right
 
         // Body velocity unit vector.
-        let vel_body = Vector::new(
+        let vel_body = RVector::new(
             alpha_body.cos() * beta.cos(),
             beta.sin(),
             alpha_body.sin() * beta.cos(),
         );
 
         // Starboard wing: tip UP means from_rotation_x(-gamma).
-        let zone_q_stbd = Quaternion::from_rotation_x(-gamma);
+        let zone_q_stbd = Quat::from_rotation_x(-gamma);
         let vel_stbd = zone_q_stbd.inverse() * vel_body;
         let alpha_stbd = vel_stbd.z.atan2(vel_stbd.x);
 
         // Port wing: tip UP means from_rotation_x(+gamma).
-        let zone_q_port = Quaternion::from_rotation_x(gamma);
+        let zone_q_port = Quat::from_rotation_x(gamma);
         let vel_port = zone_q_port.inverse() * vel_body;
         let alpha_port = vel_port.z.atan2(vel_port.x);
 
@@ -259,9 +262,9 @@ mod tests {
             ..Default::default()
         };
         let ctrl = neutral_controls();
-        let alpha: Scalar = 0.1;
-        let v: Scalar = 50.0;
-        let p: Scalar = 1.0;
+        let alpha: f32 = 0.1;
+        let v: f32 = 50.0;
+        let p: f32 = 1.0;
         let re = 1e6;
         let qbar = 1500.0;
 
@@ -278,14 +281,14 @@ mod tests {
             cl_coeffs.cl
         );
 
-        let b2w = Quaternion::IDENTITY;
-        let vel_r = Vector::new(al_r.cos() * bl_r.cos(), bl_r.sin(), al_r.sin() * bl_r.cos());
-        let vel_l = Vector::new(al_l.cos() * bl_l.cos(), bl_l.sin(), al_l.sin() * bl_l.cos());
+        let b2w = Quat::IDENTITY;
+        let vel_r = RVector::new(al_r.cos() * bl_r.cos(), bl_r.sin(), al_r.sin() * bl_r.cos());
+        let vel_l = RVector::new(al_l.cos() * bl_l.cos(), bl_l.sin(), al_l.sin() * bl_l.cos());
         let wf_r = zone_force_world(&cr, qbar, 16.0, 10.0, 1.6, al_r, vel_r, b2w);
         let wf_l = zone_force_world(&cl_coeffs, qbar, 16.0, 10.0, 1.6, al_l, vel_l, b2w);
 
-        let arm_r = Vector::new(0.0, 4.0, 0.0);
-        let arm_l = Vector::new(0.0, -4.0, 0.0);
+        let arm_r = RVector::new(0.0, 4.0, 0.0);
+        let arm_l = RVector::new(0.0, -4.0, 0.0);
         let net_roll = arm_r.cross(wf_r.force).x + arm_l.cross(wf_l.force).x;
 
         assert!(

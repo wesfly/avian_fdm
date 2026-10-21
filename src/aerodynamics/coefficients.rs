@@ -1,23 +1,23 @@
 //! Step 1: coefficient evaluation — table lookup, control-surface scaling, damage.
 
 use crate::components::{AeroZone, ControlInputs, ControlSurfaceRole};
-use avian3d::math::Scalar;
+use avian3d::math::Real;
 
 /// Six non-dimensional aerodynamic coefficients, fully scaled and ready to be
 /// multiplied by dynamic pressure and reference area to produce forces.
 pub(crate) struct ZoneCoefficients {
     /// Lift coefficient (positive = upward in stability frame).
-    pub cl: Scalar,
+    pub cl: Real,
     /// Drag coefficient (positive = opposing motion).
-    pub cd: Scalar,
+    pub cd: Real,
     /// Side-force coefficient (positive = starboard).
-    pub cy: Scalar,
+    pub cy: Real,
     /// Pitching-moment coefficient (positive = nose up).
-    pub cm: Scalar,
+    pub cm: Real,
     /// Rolling-moment coefficient (positive = starboard wing down).
-    pub croll: Scalar,
+    pub croll: Real,
     /// Yawing-moment coefficient (positive = nose right).
-    pub cn: Scalar,
+    pub cn: Real,
 }
 
 /// Evaluate an [`AeroZone`]'s coefficient tables and apply control-surface
@@ -29,7 +29,7 @@ pub(crate) struct ZoneCoefficients {
 ///    (the per-zone effective angle of attack, already corrected for body rates
 ///    via [`zone_local_angles`][super::local_angles::zone_local_angles]).  CY
 ///    (side force) is evaluated at `beta_local`.  Tables may be a constant
-///    (`Scalar`), a 1-D function of the primary angle (`Table1D`), or a 2-D
+///    (`Real`), a 1-D function of the primary angle (`Table1D`), or a 2-D
 ///    function of (angle, Re) (`Table2D`).
 ///
 /// 2. **Control-surface scaling**. If the zone is tagged with a
@@ -58,11 +58,11 @@ pub(crate) struct ZoneCoefficients {
 pub(crate) fn evaluate_zone_coefficients(
     zone: &AeroZone,
     ctrl: &ControlInputs,
-    alpha_local: Scalar,
-    beta_local: Scalar,
-    re: Scalar,
-    qbar: Scalar,
-    remaining: Scalar,
+    alpha_local: Real,
+    beta_local: Real,
+    re: Real,
+    qbar: Real,
+    remaining: Real,
 ) -> ZoneCoefficients {
     let cl_base = zone.cl.evaluate(alpha_local, re);
     let cd_base = zone.cd.evaluate(alpha_local, re);
@@ -109,7 +109,7 @@ mod tests {
         }
     }
 
-    fn simple_zone(cl: Scalar, cd: Scalar) -> AeroZone {
+    fn simple_zone(cl: Real, cd: Real) -> AeroZone {
         AeroZone {
             cl: AeroCoeff::Scalar(cl),
             cd: AeroCoeff::Scalar(cd),

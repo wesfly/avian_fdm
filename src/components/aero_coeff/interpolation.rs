@@ -1,6 +1,6 @@
 //! [`AeroCoeff::evaluate`], bilinear interpolation, and clamping helpers.
 
-use avian3d::math::Scalar as S;
+use avian3d::math::Real as S;
 use bevy_log::{warn, warn_once};
 
 use crate::math::lerp_1d;

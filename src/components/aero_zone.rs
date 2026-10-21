@@ -2,8 +2,7 @@
 
 use crate::_bevy::*;
 use crate::components::aero_coeff::AeroCoeff;
-use avian3d::math::Scalar;
-use avian3d::prelude::Collider;
+use avian3d::{math::Real, prelude::Collider};
 use serde::{Deserialize, Serialize};
 
 /// Per-zone aerodynamic coefficient contributions.
@@ -95,21 +94,21 @@ pub struct AeroZone {
     /// deformation drag). `None` (default) disables this. Extra drag =
     /// coefficient * fraction destroyed / dynamic pressure. Zero when fully
     /// intact or fully detached.
-    pub damage_drag_coeff: Option<Scalar>,
+    pub damage_drag_coeff: Option<Real>,
 
     /// Aerodynamic planform area of this zone (m^2).
     ///
     /// Force = coefficient * q-bar * area_m2, so each zone is
     /// self-contained. For wing zones, set to the physical planform area.
     /// Defaults to 0.0 (no aerodynamic force, correct for mass-only zones).
-    pub area_m2: Scalar,
+    pub area_m2: Real,
 
     /// Reference chord for this zone (m), used to dimensionalize pitching-moment
     /// coefficients: `M_pitch = CM * q_bar * area_m2 * chord_m`.
     ///
     /// For wing zones, use the mean aerodynamic chord. Defaults to 0.0 (no
     /// pitching moment contribution, which is correct when CM is Absent).
-    pub chord_m: Scalar,
+    pub chord_m: Real,
 }
 
 impl AeroZone {

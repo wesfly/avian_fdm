@@ -1,12 +1,11 @@
 //! Throttle-to-thrust-fraction interpolation.
 
 use crate::math::lerp_1d;
-use avian3d::math::Scalar;
 
 /// Linear interpolation over a `[[throttle, fraction]; N]` lookup table.
 ///
 /// Clamps to the boundary values when `x` is outside the table range.
-pub(crate) fn interp_curve(curve: &[[Scalar; 2]], x: Scalar) -> Scalar {
+pub(crate) fn interp_curve(curve: &[[f32; 2]], x: f32) -> f32 {
     if curve.is_empty() {
         return 0.0;
     }
@@ -14,8 +13,8 @@ pub(crate) fn interp_curve(curve: &[[Scalar; 2]], x: Scalar) -> Scalar {
         return curve[0][1];
     }
     let x = x.clamp(curve[0][0], curve[curve.len() - 1][0]);
-    let bp: Vec<Scalar> = curve.iter().map(|p| p[0]).collect();
-    let vals: Vec<Scalar> = curve.iter().map(|p| p[1]).collect();
+    let bp: Vec<f32> = curve.iter().map(|p| p[0]).collect();
+    let vals: Vec<f32> = curve.iter().map(|p| p[1]).collect();
     lerp_1d(x, &bp, &vals)
 }
 

@@ -1,8 +1,10 @@
 //! Aircraft-level components: geometry and the core spawn bundle.
 
 use crate::_bevy::*;
-use avian3d::math::Scalar;
-use avian3d::prelude::{AngularVelocity, ConstantForce, ConstantTorque, LinearVelocity, RigidBody};
+use avian3d::{
+    math::Real,
+    prelude::{AngularVelocity, ConstantForce, ConstantTorque, LinearVelocity, RigidBody},
+};
 use serde::{Deserialize, Serialize};
 
 /// Core bundle. Spawn on the aircraft root entity.
@@ -114,11 +116,11 @@ pub struct AircraftCoreBundle {
 #[reflect(Component, Serialize, Deserialize)]
 pub struct AircraftGeometry {
     /// Reference wing area S (m²).
-    pub wing_area_m2: Scalar,
+    pub wing_area_m2: Real,
     /// Wing span b (m). Used to non-dimensionalise rolling/yawing moments.
-    pub wing_span_m: Scalar,
+    pub wing_span_m: Real,
     /// Mean aerodynamic chord c̄ (m). Used to non-dimensionalise pitching moment.
-    pub chord_m: Scalar,
+    pub chord_m: Real,
 }
 
 /// Whole-aircraft angular-rate damping derivatives (LOD = Level of Detail
@@ -156,13 +158,13 @@ pub struct AircraftGeometry {
 pub struct LodDamping {
     /// Roll damping derivative ∂Cl/∂p̂, where p̂ = p · b/(2V).
     /// Typical range: −0.4 to −0.5 for light aircraft.
-    pub cl_p: Scalar,
+    pub cl_p: Real,
     /// Pitch damping derivative ∂Cm/∂q̂, where q̂ = q · c̄/(2V).
     /// Typical range: −10 to −20 for light aircraft.
-    pub cm_q: Scalar,
+    pub cm_q: Real,
     /// Yaw damping derivative ∂Cn/∂r̂, where r̂ = r · b/(2V).
     /// Typical range: −0.1 to −0.15 for light aircraft.
-    pub cn_r: Scalar,
+    pub cn_r: Real,
 }
 
 /// Lift-induced drag model.
@@ -204,5 +206,5 @@ pub struct InducedDrag {
     /// elliptical shape. 1.0 = perfect (no wasted energy), lower values
     /// account for real-world losses from wing shape and fuselage
     /// interference.
-    pub oswald_factor: Scalar,
+    pub oswald_factor: Real,
 }

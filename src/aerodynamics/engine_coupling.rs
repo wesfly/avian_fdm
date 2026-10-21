@@ -6,7 +6,7 @@
 //! and accumulates them — with their moment-arm torque — into the root
 //! force/torque accumulators.
 
-use avian3d::math::Vector;
+use avian3d::math::RVector;
 use bevy_math::DVec3;
 
 use crate::components::ZoneForce;
@@ -19,9 +19,9 @@ use crate::math::dvec3_to_vector;
 /// thrust is asymmetric.
 pub(super) fn accumulate_engine_force(
     zf: &ZoneForce,
-    com_world: Vector,
-    total_force: &mut Vector,
-    total_torque: &mut Vector,
+    com_world: RVector,
+    total_force: &mut RVector,
+    total_torque: &mut RVector,
 ) {
     if zf.force != DVec3::ZERO {
         let force = dvec3_to_vector(zf.force);
@@ -42,9 +42,9 @@ mod tests {
             force: DVec3::new(500.0, 0.0, 0.0),
             world_point: DVec3::ZERO,
         };
-        let (mut f, mut t) = (Vector::ZERO, Vector::ZERO);
-        accumulate_engine_force(&zf, Vector::ZERO, &mut f, &mut t);
-        assert!((f - Vector::new(500.0, 0.0, 0.0)).length() < 1e-5);
+        let (mut f, mut t) = (RVector::ZERO, RVector::ZERO);
+        accumulate_engine_force(&zf, RVector::ZERO, &mut f, &mut t);
+        assert!((f - RVector::new(500.0, 0.0, 0.0)).length() < 1e-5);
         assert!(t.length() < 1e-5, "on-axis engine must not produce torque");
     }
 
@@ -55,8 +55,8 @@ mod tests {
             force: DVec3::new(500.0, 0.0, 0.0),
             world_point: DVec3::new(0.0, 2.0, 0.0),
         };
-        let (mut f, mut t) = (Vector::ZERO, Vector::ZERO);
-        accumulate_engine_force(&zf, Vector::ZERO, &mut f, &mut t);
+        let (mut f, mut t) = (RVector::ZERO, RVector::ZERO);
+        accumulate_engine_force(&zf, RVector::ZERO, &mut f, &mut t);
         // arm=(0,2,0) × thrust=(500,0,0) → torque=(0,0,-1000)
         assert!(
             (t.z - (-1000.0)).abs() < 1e-4,
@@ -72,9 +72,9 @@ mod tests {
             force: DVec3::ZERO,
             world_point: DVec3::new(0.0, 5.0, 0.0),
         };
-        let (mut f, mut t) = (Vector::new(100.0, 0.0, 0.0), Vector::new(0.0, 50.0, 0.0));
-        accumulate_engine_force(&zf, Vector::ZERO, &mut f, &mut t);
-        assert!((f - Vector::new(100.0, 0.0, 0.0)).length() < 1e-5);
-        assert!((t - Vector::new(0.0, 50.0, 0.0)).length() < 1e-5);
+        let (mut f, mut t) = (RVector::new(100.0, 0.0, 0.0), RVector::new(0.0, 50.0, 0.0));
+        accumulate_engine_force(&zf, RVector::ZERO, &mut f, &mut t);
+        assert!((f - RVector::new(100.0, 0.0, 0.0)).length() < 1e-5);
+        assert!((t - RVector::new(0.0, 50.0, 0.0)).length() < 1e-5);
     }
 }

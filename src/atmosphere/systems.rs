@@ -7,9 +7,9 @@
 use super::isa::atmosphere_at;
 use crate::_bevy::*;
 use crate::components::AtmosphereState;
-use avian3d::{math::Scalar, prelude::Position};
+use avian3d::{math::Real, prelude::Position};
 
-const EARTH_RADIUS: Scalar = 6_360_000.0;
+const EARTH_RADIUS: Real = 6_360_000.0;
 
 /// Updates [`AtmosphereState`] on each aircraft from its world-space altitude.
 ///
@@ -17,7 +17,7 @@ const EARTH_RADIUS: Scalar = 6_360_000.0;
 #[allow(clippy::unnecessary_cast)]
 pub fn update_atmosphere(mut query: Query<(&Position, &mut AtmosphereState)>) {
     for (position, mut atm) in &mut query {
-        let altitude_m = position.length() as Scalar - EARTH_RADIUS;
+        let altitude_m = position.length() as Real - EARTH_RADIUS;
         *atm = atmosphere_at(altitude_m);
     }
 }

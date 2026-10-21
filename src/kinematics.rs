@@ -12,7 +12,7 @@
 use crate::_bevy::*;
 use crate::atmosphere::WindResource;
 use crate::components::{AtmosphereState, FlightState};
-use avian3d::math::{Scalar, Vector};
+use avian3d::math::{RVector, Real};
 
 /// Updates [`FlightState`] on each aircraft from velocity and atmosphere.
 ///
@@ -29,15 +29,15 @@ pub fn update_flight_state(
     )>,
     wind: Option<Res<WindResource>>,
 ) {
-    use crate::math::{quat_to_quaternion, world_to_body};
+    use crate::math::world_to_body;
 
-    let wind_world = wind.map(|w| w.velocity_world_ms).unwrap_or(Vector::ZERO);
+    let wind_world = wind.map(|w| w.velocity_world_ms).unwrap_or(RVector::ZERO);
 
     for (transform, lin_vel, ang_vel, atm, mut fs) in &mut query {
-        let altitude_m = transform.translation().y as Scalar;
+        let altitude_m = transform.translation().y as Real;
 
         // Body angular rates, rotate world AngularVelocity to body frame.
-        let q = quat_to_quaternion(transform.rotation());
+        let q = transform.rotation();
         let av_world = ang_vel.0;
         let omega_body = q.inverse() * av_world;
         let p_rads = omega_body.x;

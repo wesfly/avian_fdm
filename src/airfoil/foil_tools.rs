@@ -38,7 +38,7 @@
 
 use crate::airfoil::AirfoilData;
 use crate::components::aero_coeff::AeroCoeff;
-use avian3d::math::Scalar as S;
+use avian3d::math::Real as S;
 use thiserror::Error;
 
 /// All three Ncrit slices parsed from one foil.tools polar CSV.

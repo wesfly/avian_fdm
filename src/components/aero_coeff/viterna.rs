@@ -8,7 +8,7 @@
 //! table clamping during post-stall flight, tumbling, or any orientation
 //! where the local angle of attack exceeds the wind-tunnel data range.
 
-use avian3d::math::Scalar as S;
+use avian3d::math::Real as S;
 
 use super::types::AeroCoeff;
 

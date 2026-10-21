@@ -48,46 +48,47 @@
 //! μ_ref = 1.716×10⁻⁵ kg/(m·s),  T_ref = 273.15 K,  S = 110.4 K
 //! ```
 
+use avian3d::math::Real;
+
 use crate::components::AtmosphereState;
-use avian3d::math::Scalar;
 
 //
 // ISA constants
 //
 
 /// Sea-level temperature (K).
-const T0: Scalar = 288.15;
+const T0: Real = 288.15;
 /// Sea-level pressure (Pa).
-const P0: Scalar = 101_325.0;
+const P0: Real = 101_325.0;
 /// Tropospheric lapse rate (K/m).
-const L: Scalar = 0.006_5;
+const L: Real = 0.006_5;
 /// Tropopause altitude (m).
-const H_TROP: Scalar = 11_000.0;
+const H_TROP: Real = 11_000.0;
 /// Tropopause temperature (K).
-const T_TROP: Scalar = 216.65;
+const T_TROP: Real = 216.65;
 /// Specific gas constant for dry air (J/(kg·K)).
-const R_AIR: Scalar = 287.052_87;
+const R_AIR: Real = 287.052_87;
 /// Standard gravity (m/s²).
-const G: Scalar = 9.806_65;
+const G: Real = 9.806_65;
 /// Adiabatic index of air.
-const GAMMA: Scalar = 1.4;
+const GAMMA: Real = 1.4;
 
 /// Pressure exponent in the troposphere: g / (R · L).
-const TROP_EXPONENT: Scalar = G / (R_AIR * L); // ~ 5.2559
+const TROP_EXPONENT: Real = G / (R_AIR * L); // ~ 5.2559
 
 /// Sutherland reference temperature (K).
-const T_REF_SUTH: Scalar = 273.15;
+const T_REF_SUTH: Real = 273.15;
 /// Sutherland reference dynamic viscosity (kg/(m·s)).
-const MU_REF_SUTH: Scalar = 1.716e-5;
+const MU_REF_SUTH: Real = 1.716e-5;
 /// Sutherland constant S (K).
-const S_SUTH: Scalar = 110.4;
+const S_SUTH: Real = 110.4;
 
 //
 // Pure ISA functions (public for testing and external use)
 //
 
 /// Compute ISA temperature (K) at geometric altitude `h` (m).
-pub fn isa_temperature(h: Scalar) -> Scalar {
+pub fn isa_temperature(h: Real) -> Real {
     if h <= H_TROP {
         T0 - L * h
     } else {
@@ -96,7 +97,7 @@ pub fn isa_temperature(h: Scalar) -> Scalar {
 }
 
 /// Compute ISA static pressure (Pa) at geometric altitude `h` (m).
-pub fn isa_pressure(h: Scalar) -> Scalar {
+pub fn isa_pressure(h: Real) -> Real {
     if h <= H_TROP {
         let t = isa_temperature(h);
         P0 * (t / T0).powf(TROP_EXPONENT)
@@ -109,24 +110,24 @@ pub fn isa_pressure(h: Scalar) -> Scalar {
 
 /// Compute ISA air density (kg/m³) at geometric altitude `h` (m).
 #[cfg(test)]
-pub(crate) fn isa_density(h: Scalar) -> Scalar {
+pub(crate) fn isa_density(h: Real) -> Real {
     let t = isa_temperature(h);
     let p = isa_pressure(h);
     p / (R_AIR * t)
 }
 
 /// Compute speed of sound (m/s) at temperature `t` (K).
-pub fn speed_of_sound(t: Scalar) -> Scalar {
+pub fn speed_of_sound(t: Real) -> Real {
     (GAMMA * R_AIR * t).sqrt()
 }
 
 /// Compute dynamic viscosity (kg/(m·s)) via Sutherland's law at temperature `t` (K).
-pub fn sutherland_viscosity(t: Scalar) -> Scalar {
+pub fn sutherland_viscosity(t: Real) -> Real {
     MU_REF_SUTH * (t / T_REF_SUTH).powf(1.5) * (T_REF_SUTH + S_SUTH) / (t + S_SUTH)
 }
 
 /// Populate an [`AtmosphereState`] for the given altitude (m).
-pub fn atmosphere_at(h: Scalar) -> AtmosphereState {
+pub fn atmosphere_at(h: Real) -> AtmosphereState {
     let temperature_k = isa_temperature(h);
     let pressure_pa = isa_pressure(h);
     let density_kgm3 = pressure_pa / (R_AIR * temperature_k);
@@ -149,11 +150,11 @@ mod tests {
 
     /// Tolerance for ISA validation: ±0.1% on density, ±0.5% on pressure.
     /// Reference values from ICAO Doc 7488 / standard ISA tables.
-    const DENS_TOL: Scalar = 0.001;
-    const PRES_TOL: Scalar = 0.005;
-    const TEMP_TOL: Scalar = 0.001;
+    const DENS_TOL: Real = 0.001;
+    const PRES_TOL: Real = 0.005;
+    const TEMP_TOL: Real = 0.001;
 
-    fn pct_err(got: Scalar, expected: Scalar) -> Scalar {
+    fn pct_err(got: Real, expected: Real) -> Real {
         (got - expected).abs() / expected
     }
 

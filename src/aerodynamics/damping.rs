@@ -1,6 +1,7 @@
 //! Step 4 (LOD fallback): whole-aircraft angular-rate damping torque.
 
-use avian3d::math::{Quaternion, Vector};
+use avian3d::math::RVector;
+use bevy_math::Quat;
 
 use crate::components::{AircraftGeometry, FlightState, LodDamping};
 
@@ -46,15 +47,15 @@ pub fn damping_torque(
     flight: &FlightState,
     lod: &LodDamping,
     geo: &AircraftGeometry,
-    body_to_world: Quaternion,
-) -> Vector {
+    body_to_world: Quat,
+) -> RVector {
     let v = flight.airspeed_ms;
     let qbar = flight.dynamic_pressure_pa;
     let s = geo.wing_area_m2;
     let b = geo.wing_span_m;
     let c = geo.chord_m;
 
-    let damp_body = Vector::new(
+    let damp_body = RVector::new(
         lod.cl_p * (flight.p_rads * b / (2.0 * v)) * qbar * s * b,
         lod.cm_q * (flight.q_rads * c / (2.0 * v)) * qbar * s * c,
         lod.cn_r * (flight.r_rads * b / (2.0 * v)) * qbar * s * b,
@@ -65,9 +66,11 @@ pub fn damping_torque(
 
 #[cfg(test)]
 mod tests {
+    use std::f32::consts::FRAC_PI_2;
+
     use super::*;
     use crate::components::LodDamping;
-    use avian3d::math::Scalar;
+    use avian3d::math::Real;
 
     fn geo() -> AircraftGeometry {
         AircraftGeometry {
@@ -85,7 +88,7 @@ mod tests {
         }
     }
 
-    fn flight_rates(p: Scalar, q: Scalar, r: Scalar) -> FlightState {
+    fn flight_rates(p: Real, q: Real, r: Real) -> FlightState {
         FlightState {
             p_rads: p,
             q_rads: q,
@@ -106,7 +109,7 @@ mod tests {
                 cn_r: 0.0,
             },
             &geo(),
-            Quaternion::IDENTITY,
+            Quat::IDENTITY,
         );
         assert!(
             damp.x < 0.0,
@@ -121,7 +124,7 @@ mod tests {
             &flight_rates(0.0, 0.0, 0.0),
             &lod_full(),
             &geo(),
-            Quaternion::IDENTITY,
+            Quat::IDENTITY,
         );
         assert!(
             damp.length() < 1e-5,
@@ -135,7 +138,7 @@ mod tests {
             &flight_rates(1.0, 1.0, 1.0),
             &lod_full(),
             &geo(),
-            Quaternion::IDENTITY,
+            Quat::IDENTITY,
         );
         assert!(
             damp.x < 0.0,
@@ -169,13 +172,8 @@ mod tests {
             cm_q: 0.0,
             cn_r: 0.0,
         };
-        let identity = damping_torque(&flight, &lod, &geo(), Quaternion::IDENTITY);
-        let rotated = damping_torque(
-            &flight,
-            &lod,
-            &geo(),
-            Quaternion::from_rotation_x(avian3d::math::FRAC_PI_2),
-        );
+        let identity = damping_torque(&flight, &lod, &geo(), Quat::IDENTITY);
+        let rotated = damping_torque(&flight, &lod, &geo(), Quat::from_rotation_x(FRAC_PI_2));
         assert!(
             (rotated.length() - identity.length()).abs() < 1e-3,
             "rotation should not change damping magnitude"

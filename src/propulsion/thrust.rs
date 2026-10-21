@@ -1,8 +1,8 @@
 //! Engine thrust computation system (Gagg-Ferrar altitude model).
 
 use crate::_bevy::*;
-use crate::math::{quat_to_quaternion, vector_to_dvec3};
-use avian3d::math::Scalar;
+use crate::math::vector_to_dvec3;
+use avian3d::math::Real;
 use avian3d::prelude::ColliderOf;
 
 use super::engine_zone::EngineZone;
@@ -12,7 +12,7 @@ use crate::components::{
 };
 
 /// Sea-level standard density (kg/m³).
-pub(super) const RHO_0: Scalar = 1.225;
+pub(super) const RHO_0: Real = 1.225;
 
 /// Phase 1: compute engine thrust and write `ZoneForce`.
 #[allow(clippy::type_complexity)]
@@ -66,7 +66,7 @@ pub fn compute_engine_zone_forces(
             * speed_factor;
 
         // 4. Rotate thrust axis body to world and write ZoneForce.
-        let q = quat_to_quaternion(root_gt.rotation());
+        let q = root_gt.rotation();
         let thrust_world = q * (engine.thrust_axis_body.normalize_or_zero() * thrust_n);
 
         if !thrust_world.is_finite() {

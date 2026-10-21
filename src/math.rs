@@ -5,7 +5,7 @@
 //! / `Quaternion`), which is `f32`/`Vec3`/`Quat` when compiled with the
 //! `f32` feature and `f64`/`DVec3`/`DQuat` with `f64`.
 
-use avian3d::math::{Quaternion, Scalar, Vector};
+use avian3d::math::{RVector, Real};
 use bevy_math::{DVec3, Quat, Vec3};
 
 /// Linear interpolation in a 1-D breakpoint table.
@@ -14,10 +14,10 @@ use bevy_math::{DVec3, Quat, Vec3};
 /// `bp` and `vals` are the same length and that `bp` is sorted ascending.
 /// Returns `0.0` for an empty table, and `vals[0]` for a single-entry table.
 #[inline]
-pub(crate) fn lerp_1d(x: Scalar, bp: &[Scalar], vals: &[Scalar]) -> Scalar {
+pub(crate) fn lerp_1d(x: Real, bp: &[Real], vals: &[Real]) -> Real {
     debug_assert_eq!(bp.len(), vals.len());
     if bp.is_empty() {
-        return 0.0 as Scalar;
+        return 0.0 as Real;
     }
     if bp.len() == 1 {
         return vals[0];
@@ -31,35 +31,28 @@ pub(crate) fn lerp_1d(x: Scalar, bp: &[Scalar], vals: &[Scalar]) -> Scalar {
 /// Convert a Bevy `Vec3` (always f32) to the active-precision `Vector`.
 #[inline]
 #[allow(clippy::unnecessary_cast)]
-pub(crate) fn vec3_to_vector(v: Vec3) -> Vector {
-    Vector::new(v.x as Scalar, v.y as Scalar, v.z as Scalar)
+pub(crate) fn vec3_to_vector(v: Vec3) -> RVector {
+    RVector::new(v.x as Real, v.y as Real, v.z as Real)
 }
 
 /// Convert a Bevy `DVec3` (always f64) to the active-precision `Vector`.
 #[inline]
 #[allow(clippy::unnecessary_cast)]
-pub(crate) fn dvec3_to_vector(v: DVec3) -> Vector {
-    Vector::new(v.x as Scalar, v.y as Scalar, v.z as Scalar)
-}
-
-/// Convert a Bevy `Quat` (always f32) to the active-precision `Quaternion`.
-#[inline]
-#[allow(clippy::unnecessary_cast)]
-pub(crate) fn quat_to_quaternion(q: Quat) -> Quaternion {
-    Quaternion::from_array(q.to_array().map(|x| x as Scalar))
+pub(crate) fn dvec3_to_vector(v: DVec3) -> RVector {
+    RVector::new(v.x as Real, v.y as Real, v.z as Real)
 }
 
 /// Convert the active-precision `Vector` back to a Bevy `Vec3` (always f32).
 #[inline]
 #[allow(clippy::unnecessary_cast)]
-pub(crate) fn vector_to_vec3(v: Vector) -> Vec3 {
+pub(crate) fn vector_to_vec3(v: RVector) -> Vec3 {
     Vec3::new(v.x as f32, v.y as f32, v.z as f32)
 }
 
 /// Convert the active-precision `Vector` back to a Bevy `DVec3` (always f64).
 #[inline]
 #[allow(clippy::unnecessary_cast)]
-pub(crate) fn vector_to_dvec3(v: Vector) -> DVec3 {
+pub(crate) fn vector_to_dvec3(v: RVector) -> DVec3 {
     DVec3::new(v.x as f64, v.y as f64, v.z as f64)
 }
 
@@ -69,27 +62,28 @@ pub(crate) fn vector_to_dvec3(v: Vector) -> DVec3 {
 /// X = forward (nose), Y = right wing, Z = down (belly).
 /// At identity rotation, body X maps to world −Z.
 #[cfg(test)]
-pub(crate) fn body_to_world(rotation: Quaternion, v_body: Vector) -> Vector {
+pub(crate) fn body_to_world(rotation: Quat, v_body: RVector) -> RVector {
     rotation * v_body
 }
 
 /// Rotate a vector from the Bevy world frame into the aircraft body frame.
 #[inline]
-pub(crate) fn world_to_body(rotation: Quaternion, v_world: Vector) -> Vector {
+pub(crate) fn world_to_body(rotation: Quat, v_world: RVector) -> RVector {
     rotation.inverse() * v_world
 }
 
 #[cfg(test)]
 mod tests {
+    use std::f32::consts::FRAC_PI_2;
+
     use super::*;
-    use avian3d::math::FRAC_PI_2;
 
     #[cfg(feature = "f32")]
-    const EPS: Scalar = 1e-5;
+    const EPS: Real = 1e-5;
     #[cfg(not(feature = "f32"))]
     const EPS: Scalar = 1e-10;
 
-    fn approx_eq(a: Vector, b: Vector) -> bool {
+    fn approx_eq(a: RVector, b: RVector) -> bool {
         (a - b).length() < EPS
     }
 
@@ -101,24 +95,24 @@ mod tests {
     #[test]
     fn identity_rotation_is_passthrough() {
         assert!(approx_eq(
-            body_to_world(Quaternion::IDENTITY, Vector::X),
-            Vector::X
+            body_to_world(Quat::IDENTITY, RVector::X),
+            RVector::X
         ));
         assert!(approx_eq(
-            body_to_world(Quaternion::IDENTITY, Vector::Y),
-            Vector::Y
+            body_to_world(Quat::IDENTITY, RVector::Y),
+            RVector::Y
         ));
         assert!(approx_eq(
-            body_to_world(Quaternion::IDENTITY, Vector::Z),
-            Vector::Z
+            body_to_world(Quat::IDENTITY, RVector::Z),
+            RVector::Z
         ));
     }
 
     /// `world_to_body` is the exact inverse of `body_to_world`.
     #[test]
     fn round_trip() {
-        let rot = Quaternion::from_rotation_y(0.3) * Quaternion::from_rotation_x(0.1);
-        let v = Vector::new(1.0, 2.0, 3.0);
+        let rot = Quat::from_rotation_y(0.3) * Quat::from_rotation_x(0.1);
+        let v = RVector::new(1.0, 2.0, 3.0);
         let round = world_to_body(rot, body_to_world(rot, v));
         assert!(approx_eq(round, v), "round-trip failed: {round:?} != {v:?}");
     }
@@ -126,10 +120,10 @@ mod tests {
     /// Rotating 90° about world +Y takes body +X to world −Z (right-hand rule).
     #[test]
     fn rotation_y_90_x_to_neg_z() {
-        let rot = Quaternion::from_rotation_y(FRAC_PI_2);
-        let result = body_to_world(rot, Vector::X);
+        let rot = Quat::from_rotation_y(FRAC_PI_2);
+        let result = body_to_world(rot, RVector::X);
         assert!(
-            approx_eq(result, -Vector::Z),
+            approx_eq(result, -RVector::Z),
             "expected (0,0,-1), got {result:?}"
         );
     }
@@ -137,10 +131,10 @@ mod tests {
     /// Rotating 90° about world +X takes body +Y to world +Z (right-hand rule).
     #[test]
     fn rotation_x_90_y_to_z() {
-        let rot = Quaternion::from_rotation_x(FRAC_PI_2);
-        let result = body_to_world(rot, Vector::Y);
+        let rot = Quat::from_rotation_x(FRAC_PI_2);
+        let result = body_to_world(rot, RVector::Y);
         assert!(
-            approx_eq(result, Vector::Z),
+            approx_eq(result, RVector::Z),
             "expected (0,0,1), got {result:?}"
         );
     }
@@ -148,11 +142,11 @@ mod tests {
     /// `world_to_body` correctly inverts a known rotation.
     #[test]
     fn world_to_body_inverts_rotation_y() {
-        let rot = Quaternion::from_rotation_y(FRAC_PI_2);
+        let rot = Quat::from_rotation_y(FRAC_PI_2);
         // After 90° +Y rotation, world −Z is body +X.
-        let result = world_to_body(rot, -Vector::Z);
+        let result = world_to_body(rot, -RVector::Z);
         assert!(
-            approx_eq(result, Vector::X),
+            approx_eq(result, RVector::X),
             "expected (1,0,0), got {result:?}"
         );
     }
