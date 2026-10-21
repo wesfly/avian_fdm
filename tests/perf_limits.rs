@@ -9,7 +9,6 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use avian3d::math::Real;
 use avian_fdm::components::aero_coeff::AeroCoeff;
 
 //
@@ -94,7 +93,7 @@ fn table2d_lookup_under_500ns() {
 
 #[test]
 fn aggregate_zones_15_under_5000ns() {
-    let fractions: [Real; 6] = [0.175, 0.175, 0.150, 0.175, 0.175, 0.150];
+    let fractions: [f32; 6] = [0.175, 0.175, 0.150, 0.175, 0.175, 0.150];
     let tables: Vec<AeroCoeff> = fractions
         .iter()
         .flat_map(|&f| {
@@ -112,7 +111,7 @@ fn aggregate_zones_15_under_5000ns() {
         .collect();
 
     let ns = median_ns(1_000, || {
-        let sum: Real = tables
+        let sum: f32 = tables
             .iter()
             .map(|t| t.evaluate(black_box(0.087), black_box(2_000_000.0)))
             .sum();
@@ -123,7 +122,7 @@ fn aggregate_zones_15_under_5000ns() {
 
 #[test]
 fn aggregate_zones_15x100_under_500000ns() {
-    let fractions: [Real; 6] = [0.175, 0.175, 0.150, 0.175, 0.175, 0.150];
+    let fractions: [f32; 6] = [0.175, 0.175, 0.150, 0.175, 0.175, 0.150];
     let tables: Vec<AeroCoeff> = fractions
         .iter()
         .flat_map(|&f| {
@@ -139,8 +138,8 @@ fn aggregate_zones_15x100_under_500000ns() {
         })
         .take(15)
         .collect();
-    let states: Vec<(Real, Real)> = (0..100)
-        .map(|i| (0.05 + i as Real * 0.001, 1_500_000.0 + i as Real * 5_000.0))
+    let states: Vec<(f32, f32)> = (0..100)
+        .map(|i| (0.05 + i as f32 * 0.001, 1_500_000.0 + i as f32 * 5_000.0))
         .collect();
 
     let ns = median_ns(100, || {
