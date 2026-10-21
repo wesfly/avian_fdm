@@ -44,6 +44,8 @@ use avian_fdm_j3cub_jsbsim::presets::j3cub;
 use bevy::prelude::*;
 use bevy::time::TimeUpdateStrategy;
 
+const EARTH_RADIUS: f64 = 6_360_000.0;
+
 // ── Configuration ────────────────────────────────────────────────────────────
 
 const SIM_DURATION_S: f64 = 60.0;
@@ -126,7 +128,7 @@ fn spawn_aircraft(mut commands: Commands) {
     let initial_rot = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
     let root = j3cub::spawn(
         &mut commands,
-        Transform::from_xyz(0.0, 300.0, 0.0).with_rotation(initial_rot),
+        Transform::from_xyz(0.0, EARTH_RADIUS as f32 + 300.0, 0.0).with_rotation(initial_rot),
     );
     commands
         .entity(root)
