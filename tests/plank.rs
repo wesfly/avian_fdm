@@ -457,7 +457,7 @@ fn plank_cl_alpha() {
     let v: Real = 50.0;
 
     fn spawn_alpha0(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands
             .entity(root)
             .insert(LinearVelocity(Vec3::new(50.0, 0.0, 0.0)));
@@ -466,7 +466,7 @@ fn plank_cl_alpha() {
     fn spawn_alpha2(mut commands: Commands) {
         let root = spawn_plank(
             &mut commands,
-            Transform::from_xyz(0.0, 500.0, 0.0).with_rotation(
+            Transform::from_xyz(0.0, EARTH_RADIUS + 500.0, 0.0).with_rotation(
                 // Pitch up by 2 deg in body frame.
                 // Body pitch = rotation around world Z (since body Y-starboard
                 // maps to world Z after the PI/2 rotation_x).
@@ -512,6 +512,8 @@ fn plank_cl_alpha() {
     );
 }
 
+const EARTH_RADIUS: Real = 6_360_000.0;
+
 /// Verify emergent Cm_alpha matches the analytical value.
 ///
 /// Method: spawn at alpha=0 and alpha=2deg, read pitch torque difference.
@@ -523,7 +525,7 @@ fn plank_cm_alpha() {
     let v: Real = 50.0;
 
     fn spawn_alpha0(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands
             .entity(root)
             .insert(LinearVelocity(Vec3::new(50.0, 0.0, 0.0)));
@@ -532,7 +534,7 @@ fn plank_cm_alpha() {
     fn spawn_alpha2(mut commands: Commands) {
         let root = spawn_plank(
             &mut commands,
-            Transform::from_xyz(0.0, 500.0, 0.0).with_rotation(
+            Transform::from_xyz(0.0, EARTH_RADIUS + 500.0, 0.0).with_rotation(
                 Quat::from_rotation_z(2.0_f32.to_radians())
                     * Quat::from_rotation_x(std::f32::consts::FRAC_PI_2),
             ),
@@ -582,14 +584,14 @@ fn plank_cm_q() {
     let q_rate: Real = (5.0 as Real).to_radians(); // 5 deg/s pitch rate
 
     fn spawn_q0(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands
             .entity(root)
             .insert(LinearVelocity(Vec3::new(50.0, 0.0, 0.0)));
     }
 
     fn spawn_q5(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands.entity(root).insert((
             LinearVelocity(Vec3::new(50.0, 0.0, 0.0)),
             // Body pitch rate q -> world Z angular velocity
@@ -634,14 +636,14 @@ fn plank_cl_p() {
     let p_rate: Real = (10.0 as Real).to_radians(); // 10 deg/s roll rate
 
     fn spawn_p0(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands
             .entity(root)
             .insert(LinearVelocity(Vec3::new(50.0, 0.0, 0.0)));
     }
 
     fn spawn_p10(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands.entity(root).insert((
             LinearVelocity(Vec3::new(50.0, 0.0, 0.0)),
             // Body roll rate p -> world X angular velocity
@@ -688,7 +690,7 @@ fn plank_cn_beta() {
     let v: Real = 50.0;
 
     fn spawn_beta0(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands
             .entity(root)
             .insert(LinearVelocity(Vec3::new(50.0, 0.0, 0.0)));
@@ -697,7 +699,7 @@ fn plank_cn_beta() {
     fn spawn_beta3(mut commands: Commands) {
         let root = spawn_plank(
             &mut commands,
-            Transform::from_xyz(0.0, 500.0, 0.0).with_rotation(
+            Transform::from_xyz(0.0, EARTH_RADIUS + 500.0, 0.0).with_rotation(
                 // Yaw 3 deg: rotate around world Y (body Z-down maps to world -Y,
                 // body yaw = rotation around body Z).
                 // After rotation_x(PI/2): body Z -> world -Y.
@@ -752,14 +754,14 @@ fn plank_cn_r() {
     let r_rate: Real = (5.0 as Real).to_radians(); // 5 deg/s yaw rate
 
     fn spawn_r0(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands
             .entity(root)
             .insert(LinearVelocity(Vec3::new(50.0, 0.0, 0.0)));
     }
 
     fn spawn_r5(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands.entity(root).insert((
             LinearVelocity(Vec3::new(50.0, 0.0, 0.0)),
             // Body yaw rate r (around body Z-down) -> world -Y angular velocity
@@ -804,7 +806,7 @@ fn plank_cn_r() {
 #[test]
 fn plank_trim() {
     fn spawn(mut commands: Commands) {
-        let root = spawn_plank(&mut commands, plank_transform(500.0, 50.0));
+        let root = spawn_plank(&mut commands, plank_transform(EARTH_RADIUS + 500.0, 50.0));
         commands
             .entity(root)
             .insert(LinearVelocity(Vec3::new(50.0, 0.0, 0.0)));
