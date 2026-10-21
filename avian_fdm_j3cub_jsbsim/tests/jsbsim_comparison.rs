@@ -38,7 +38,6 @@
 
 use std::time::Duration;
 
-use avian3d::math::Scalar;
 use avian3d::prelude::*;
 use avian_fdm::prelude::*;
 use avian_fdm_j3cub_jsbsim::presets::j3cub;
@@ -136,8 +135,8 @@ fn spawn_aircraft(mut commands: Commands) {
 
 #[allow(clippy::unnecessary_cast)]
 fn ramp_throttle(mut query: Query<&mut ControlInputs, With<AircraftGeometry>>, time: Res<Time>) {
-    let t = time.elapsed_secs_f64();
-    let throttle = (0.5 + t / 50.0).min(0.75) as Scalar;
+    let t = time.elapsed_secs();
+    let throttle = (0.5 + t / 50.0).min(0.75);
     for mut ctrl in &mut query {
         ctrl.throttle = throttle;
     }
