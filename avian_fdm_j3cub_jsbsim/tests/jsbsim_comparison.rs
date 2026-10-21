@@ -261,7 +261,7 @@ fn jsbsim_j3cub_comparison() {
     // ── Sanity assertions ────────────────────────────────────────────────
     for s in avian_data.iter() {
         assert!(
-            s.altitude_m > 0.0 && s.altitude_m < 2000.0,
+            s.altitude_m - EARTH_RADIUS > 0.0 && s.altitude_m - EARTH_RADIUS < 2000.0,
             "avian_fdm altitude out of range at t={:.1}s: {:.1} m",
             s.time,
             s.altitude_m,
@@ -386,7 +386,8 @@ fn jsbsim_j3cub_glide_comparison() {
     let final_js = &jsbsim_data[n - 1];
     let final_av = &avian_data[n - 1];
     assert!(
-        final_av.altitude_m > 50.0 && final_av.altitude_m < final_js.altitude_m * 1.5 + 50.0,
+        final_av.altitude_m - EARTH_RADIUS > 50.0
+            && final_av.altitude_m - EARTH_RADIUS < final_js.altitude_m * 1.5 + 50.0,
         "avian_fdm glide altitude unrealistic at t=60s: {:.1} m (JSBSim: {:.1} m)",
         final_av.altitude_m,
         final_js.altitude_m,
@@ -707,7 +708,8 @@ fn j3cub_emergent_cmq() {
             let initial_rot = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
             let root = j3cub::spawn(
                 &mut commands,
-                Transform::from_xyz(0.0, 300.0, 0.0).with_rotation(initial_rot),
+                Transform::from_xyz(0.0, EARTH_RADIUS as f32 + 300.0, 0.0)
+                    .with_rotation(initial_rot),
             );
             commands
                 .entity(root)
